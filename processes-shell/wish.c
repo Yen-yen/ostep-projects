@@ -13,6 +13,8 @@ int main()
         size_t characters;
         char *path1 = "/bin/";
         char *path2 = "/usr/bin/";
+        char *token;
+        char *delimiter = " ";
 
         cmd = (char *)malloc(bufsize * sizeof(char));
         if (cmd == NULL)
@@ -25,16 +27,11 @@ int main()
         characters = getline(&cmd, &bufsize, stdin);
         // Replace the newline character with null terminator
         if (cmd[characters - 1] == '\n')
-        {
             cmd[characters - 1] = '\0';
-        }
-        printf("%zu characters were read.\n", characters);
-        printf("You typed: '%s'\n", cmd);
         if (strcmp("exit", cmd) == 0)
         {
             exit(0);
         }
-        // if (strcmp("ls\n", cmd) == 0)
         else
         {
             int ppid = fork();
@@ -46,36 +43,44 @@ int main()
             }
             else if (ppid == 0)
             {
-                printf("%s", strcat(path1, cmd));
-                if (access(strcat(path1, cmd), X_OK) == -1)
+                token = strsep(&cmd, delimiter);
+                char *argv[10];
+                size_t i = 0;
+                while (token != NULL)
                 {
-                    if (access(strcat(path2, cmd), X_OK) == -1)
-                    {
-                        perror("no executable file found");
-                    }
-                    else
-                    {
-                        execv(strcat(path2, cmd), (char *[]){cmd, NULL});
-                    }
+                    argv[i] = token;
+                    i++;
+                    token = strsep(&cmd, delimiter);
                 }
-                else
+                argv[i] = NULL;
+
+                char full_path[256];        // Allocate a buffer for the full path
+                strcpy(full_path, path1);   // Copy path1 to full_path
+                strcat(full_path, argv[0]); // Append cmd to full_path
+                // Check if full_path is executable in /bin
+                if (access(full_path, X_OK) != -1)
                 {
-                    execv(strcat(path1, cmd), (char *[]){cmd, NULL});
+                    execv(full_path, argv);
+                    perror("execv");
                 }
-                // child (new process)
-                // printf("child (pid:%d)\n", (int)getpid());
-                // When calling execv, it replaces the current process with a new process
-                // If the execv call is successful, it doesn't return to the original code of the child process
-                // So, any code after execv call will not be executed unless execv fails.
-                // execv("/bin/ls", (char *[]){"ls", NULL});
-                // printf("child end\n");
+
+                strcpy(full_path, path2);   // Copy path2 to full_path
+                strcat(full_path, argv[0]); // Append cmd to full_path
+
+                // Check if full_path is executable in /usr/bin
+                if (access(full_path, X_OK) != -1)
+                {
+                    execv(full_path, argv);
+                    // execv(full_path, (char *[]){cmd, NULL});
+                    perror("execv");
+                }
+
+                // If no executable found, print error
+                perror("command not found");
             }
             else
             {
-                // Wait for the child to finish
-                // printf("parent start\n");
                 wait(NULL);
-                // printf("parent end\n");
             }
         }
     }
