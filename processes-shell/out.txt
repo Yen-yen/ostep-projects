@@ -1,0 +1,19 @@
+.
+..
+.vscode
+README.md
+a.out
+out.txt
+output.txt
+test-wish.sh
+tests
+wish.c
+ 23 yenyen  staff    736 Mar 12 15:54 ..
+drwxr-xr-x    3 yenyen  staff     96 Mar 12 15:56 .vscode
+-rw-r--r--    1 yenyen  staff  12170 Mar 12 15:54 README.md
+-rwxr-xr-x    1 yenyen  staff  34258 Mar 13 18:36 a.out
+-rw-r--r--    1 yenyen  staff     74 Mar 13 18:34 out.txt
+------x---    1 yenyen  staff     74 Mar 13 18:33 output.txt
+-rwxr-xr-x    1 yenyen  staff    124 Mar 12 15:54 test-wish.sh
+drwxr-xr-x  141 yenyen  staff   4512 Mar 12 15:54 tests
+-rw-r--r--    1 yenyen  staff   3767 Mar 13 18:33 wish.c
