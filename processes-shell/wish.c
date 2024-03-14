@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdbool.h>
 
 #define MAX_PATHS 10
 #define MAX_TOKENS 100
@@ -22,22 +23,7 @@ int main(int argc, char *argv[])
     paths[0] = "/bin/";
     size_t pathsize = 1;
     char *delimiter = " ";
-    char *cmd;
-    size_t bufsize = MAX_CMD_LEN;
-    size_t characters;
-    // while ((characters = getline(&cmd, &bufsize, fptr)) != -1)
-    // {
-    //     if (characters <= 0)
-    //     {
-    //         printf("End of file reached.\n");
-    //         break;
-    //     }
-    //     printf("%s", cmd);
 
-    //     // Process the command
-    //     // (tokenize, execute, etc.)
-    // }
-    // return 0;
     while (1)
     {
         char *cmd = NULL;
@@ -60,14 +46,16 @@ int main(int argc, char *argv[])
         else
         {
             characters = getline(&cmd, &bufsize, fptr);
-            if (characters <= 0)
+            if (characters == -1)
             {
-                break;
+                // printf("EOF");
+                fclose(fptr);
+                free(cmd);
                 exit(0);
-                return 0;
+                break;
             }
         }
-        if (cmd[0] == '#')
+        if (cmd[0] == '#' || cmd[0] == '\n')
         {
             continue;
         }
@@ -94,7 +82,7 @@ int main(int argc, char *argv[])
             if (strlen(token) == 1 && token[0] == '>')
             {
                 redirection = strsep(&cmd, delimiter);
-                printf("%s\n", redirection);
+                // printf("%s\n", redirection);
                 break;
             }
             tokens[token_size] = token;
@@ -111,6 +99,7 @@ int main(int argc, char *argv[])
         if (strcmp("exit", cur_cmd) == 0)
         {
             fclose(fptr);
+            free(cmd);
             exit(0);
         }
         else if (strcmp("cd", cur_cmd) == 0)
@@ -175,7 +164,6 @@ int main(int argc, char *argv[])
                     char full_path[256];         // Allocate a buffer for the full path
                     strcpy(full_path, paths[i]); // Copy path1 to full_path
                     strcat(full_path, cur_cmd);  // Append cmd to full_path
-                    // Check if full_path is executable in /bin
                     if (access(full_path, X_OK) != -1)
                     {
                         execv(full_path, tokens);
