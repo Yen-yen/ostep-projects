@@ -1,11 +1,9 @@
-.
-..
-.vscode
 README.md
-a.out
-g
+kfw
 out.txt
-output.txt
 test-wish.sh
 tests
+tests-out
+wish
 wish.c
+wish.h
