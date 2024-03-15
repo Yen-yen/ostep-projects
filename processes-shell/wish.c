@@ -67,17 +67,44 @@ int main(int argc, char *argv[])
         {
             continue;
         }
+
         for (int i = 0; line[i] != '\0'; i++)
         {
             if (line[i] == '\t')
                 line[i] = ' ';
             if (line[i] == '\n')
                 line[i] = '\0';
-            if (line[i] == '>')
+        }
+
+        // command is without redirection
+        char *command = strsep(&line, ">");
+        if (line != NULL)
+        {
+            // redirection
+            redirection = line;
+            // Trim leading whitespace (if any)
+            while (*redirection == ' ')
             {
+                redirection++;
+            }
+            int file_cnt = 0;
+            // Count the number of tokens separated by whitespace
+            char *tmp = strtok(redirection, " ");
+            while (tmp != NULL)
+            {
+                file_cnt++;
+                tmp = strtok(NULL, " ");
+            }
+
+            // Check if there is exactly one token
+            if (file_cnt != 1)
+            {
+                printError();
+                goto end_loop;
             }
         }
-        token = strsep(&line, delimiter);
+
+        token = strsep(&command, delimiter);
         const char *cur_cmd = token;
         char *tokens[MAX_TOKENS];
         size_t token_size = 0;
@@ -86,24 +113,13 @@ int main(int argc, char *argv[])
         {
             if (token[0] == '\0')
             {
-                token = strsep(&line, delimiter);
+                token = strsep(&command, delimiter);
                 continue;
-            }
-            if (strlen(token) == 1 && token[0] == '>')
-            {
-                redirection = strsep(&line, delimiter);
-                if (redirection == NULL)
-                {
-                    printError();
-                    goto end_loop;
-                }
-                printf("%s\n", redirection);
-                break;
             }
             tokens[token_size] = token;
 
             token_size++;
-            token = strsep(&line, delimiter);
+            token = strsep(&command, delimiter);
         }
         tokens[token_size] = NULL;
         // for (int i = 0; i < token_size; i++)
@@ -175,20 +191,20 @@ int main(int argc, char *argv[])
                     int redirection_fd = open(redirection, O_RDWR | O_CREAT, 0666);
                     if (redirection_fd < 0)
                     {
-                        // perror("cannot open the file");
+                        perror("cannot open the file");
                         printError();
                         continue;
                     }
                     if (dup2(redirection_fd, STDOUT_FILENO) < 0)
                     {
-                        // perror("cannot write in this file");
+                        perror("cannot write in this file");
                         printError();
                         continue;
                     }
                     dup2(redirection_fd, STDERR_FILENO);
                     if (close(redirection_fd) < 0)
                     {
-                        // perror("cannot close the file");
+                        perror("cannot close the file");
                         printError();
                         continue;
                     }
@@ -201,11 +217,12 @@ int main(int argc, char *argv[])
                     if (access(full_path, X_OK) != -1)
                     {
                         execv(full_path, tokens);
+                        printError();
                     }
                 }
-
                 // If no executable found, print error
                 printError();
+                clean();
                 exit(0);
             }
             else
